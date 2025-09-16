@@ -1,0 +1,53 @@
+from db.models import MenuCategory, MenuItem, get_session
+
+def get_categories(lang="pl"):
+    session = get_session()
+    try:
+        # Filtrowanie tylko dostępnych kategorii
+        categories = session.query(MenuCategory).filter_by(is_available=True).all()
+        result = []
+        for cat in categories:
+            name = getattr(cat, f"name_{lang}", None) or cat.name_pl or cat.name_en
+            result.append({
+                "id": cat.id,
+                "name": name,
+                "image_url": cat.image_url
+            })
+        return result
+    finally:
+        session.close()
+
+def get_items_by_category(category_id, lang="pl"):
+    session = get_session()
+    try:
+        # Filtrowanie tylko dostępnych pozycji menu
+        items = session.query(MenuItem).filter_by(category_id=category_id, is_available=True).all()
+        result = []
+        for item in items:
+            name = getattr(item, f"name_{lang}", None) or item.name_pl or item.name_en
+            result.append({
+                "id": item.id,
+                "name": name,
+                "price_cents": item.price_cents,
+                "image_url": item.image_url
+            })
+        return result
+    finally:
+        session.close()
+
+def get_item_by_id(item_id, lang="pl"):
+    session = get_session()
+    try:
+        # Pobieramy tylko dostępny produkt
+        item = session.query(MenuItem).filter_by(id=item_id, is_available=True).first()
+        if item:
+            name = getattr(item, f"name_{lang}", None) or item.name_pl or item.name_en
+            return {
+                "id": item.id,
+                "name": name,
+                "price_cents": item.price_cents,
+                "image_url": item.image_url
+            }
+        return None
+    finally:
+        session.close()
